@@ -1,6 +1,8 @@
 // trace converts the p1 and p2 panels into an SVG representation.
 // The alien cow farmer puzzle is found on YouTube:
 // https://www.youtube.com/watch?v=y6gioQ_1FYU
+//
+// Units are in mm.
 package main
 
 import (
@@ -29,12 +31,14 @@ func main() {
 
 	c := svg.New(os.Stdout)
 	c.Start(float64((maxx+1)*2*(pinR+padding)), float64((maxy+1)*2*(pinR+padding)))
+	c.Gstyle("fill:none;stroke:black;stroke-width:0.1")
 	for k := range p1 {
 		render(c, k, p1)
 	}
 	for k := range p2 {
 		render(c, k, p2)
 	}
+	c.Gend()
 	c.End()
 
 	log.Printf("Done.")
@@ -70,6 +74,12 @@ func render(c *svg.SVG, k key, p panel) {
 	}
 	if !up && !right {
 		c.Arc(k.rightX(-pinR), k.upY(0), pinR, pinR, pinR, false, true, k.rightX(0), k.upY(pinR))
+	}
+	if !down && !left {
+		c.Arc(k.leftX(pinR), k.downY(0), pinR, pinR, pinR, false, true, k.leftX(0), k.downY(-pinR))
+	}
+	if !down && !right {
+		c.Arc(k.rightX(0), k.downY(-pinR), pinR, pinR, pinR, false, true, k.rightX(-pinR), k.downY(0))
 	}
 }
 
