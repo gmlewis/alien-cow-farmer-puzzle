@@ -74,9 +74,13 @@ func renderPanel(c *svg.SVG, p panel) {
 	lr := key{maxx, maxy}
 
 	c.Arc(ul.leftX(-padding), ul.upY(pinR-padding), pinR, pinR, pinR, false, true, ul.leftX(pinR-padding), ul.upY(-padding))
+	c.Line(ul.leftX(pinR-padding), ul.upY(-padding), ur.rightX(padding-pinR), ur.upY(-padding))
 	c.Arc(ur.rightX(padding-pinR), ur.upY(-padding), pinR, pinR, pinR, false, true, ur.rightX(padding), ur.upY(pinR-padding))
-	c.Arc(ll.leftX(pinR), ll.downY(0), pinR, pinR, pinR, false, true, ll.leftX(0), ll.downY(-pinR))
-	c.Arc(lr.rightX(0), lr.downY(-pinR), pinR, pinR, pinR, false, true, lr.rightX(-pinR), lr.downY(0))
+	c.Line(ur.rightX(padding), ur.upY(pinR-padding), lr.rightX(padding), lr.downY(padding-pinR))
+	c.Arc(lr.rightX(padding), lr.downY(padding-pinR), pinR, pinR, pinR, false, true, lr.rightX(padding-pinR), lr.downY(padding))
+	c.Line(lr.rightX(padding-pinR), lr.downY(padding), ll.leftX(pinR-padding), ll.downY(padding))
+	c.Arc(ll.leftX(pinR-padding), ll.downY(padding), pinR, pinR, pinR, false, true, ll.leftX(-padding), ll.downY(padding-pinR))
+	c.Line(ll.leftX(-padding), ll.downY(padding-pinR), ul.leftX(-padding), ul.upY(pinR-padding))
 }
 
 func render(c *svg.SVG, k key, p panel) {
