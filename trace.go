@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	svg "github.com/ajstarks/svgo"
+	svg "github.com/ajstarks/svgo/float"
 )
 
 const (
@@ -28,7 +28,7 @@ func main() {
 	}
 
 	c := svg.New(os.Stdout)
-	c.Start((maxx+1)*2*(pinR+padding), (maxy+1)*2*(pinR+padding))
+	c.Start(float64((maxx+1)*2*(pinR+padding)), float64((maxy+1)*2*(pinR+padding)))
 	for k := range p1 {
 		render(c, k, p1)
 	}
@@ -41,7 +41,44 @@ func main() {
 }
 
 func render(c *svg.SVG, k key, p panel) {
+	up := p[key{k.x, k.y - 1}]
+	down := p[key{k.x, k.y + 1}]
+	left := p[key{k.x - 1, k.y}]
+	right := p[key{k.x + 1, k.y}]
 
+	// First, render the padded connections.
+	if up {
+		c.Line(k.leftX(0), k.upY(0), k.leftX(0), k.upY(-0.5*padding))
+		c.Line(k.rightX(0), k.upY(0), k.rightX(0), k.upY(-0.5*padding))
+	}
+	if down {
+		c.Line(k.leftX(0), k.downY(0), k.leftX(0), k.downY(0.5*padding))
+		c.Line(k.rightX(0), k.downY(0), k.rightX(0), k.downY(0.5*padding))
+	}
+	if left {
+		c.Line(k.leftX(0), k.upY(0), k.leftX(-0.5*padding), k.upY(0))
+		c.Line(k.leftX(0), k.downY(0), k.leftX(-0.5*padding), k.downY(0))
+	}
+	if right {
+		c.Line(k.rightX(0), k.upY(0), k.rightX(0.5*padding), k.upY(0))
+		c.Line(k.rightX(0), k.downY(0), k.rightX(0.5*padding), k.downY(0))
+	}
+}
+
+func (k key) leftX(dx float64) float64 {
+	return padding + dx + float64(k.x*(padding+pinR)) - float64(pinR)
+}
+
+func (k key) rightX(dx float64) float64 {
+	return padding + dx + float64(k.x*(padding+pinR)) + float64(pinR)
+}
+
+func (k key) upY(dy float64) float64 {
+	return padding + dy + float64(k.y*(padding+pinR)) - float64(pinR)
+}
+
+func (k key) downY(dy float64) float64 {
+	return padding + dy + float64(k.y*(padding+pinR)) + float64(pinR)
 }
 
 type key struct {
