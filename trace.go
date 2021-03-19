@@ -52,20 +52,52 @@ func render(c *svg.SVG, k key, p panel) {
 
 	// First, render the padded connections.
 	if up {
-		c.Line(k.leftX(0), k.upY(0), k.leftX(0), k.upY(-0.5*padding))
-		c.Line(k.rightX(0), k.upY(0), k.rightX(0), k.upY(-0.5*padding))
+		if left {
+			c.Line(k.leftX(0), k.upY(0), k.leftX(0), k.upY(-0.5*padding))
+		} else {
+			c.Line(k.leftX(0), k.upY(pinR), k.leftX(0), k.upY(-0.5*padding))
+		}
+		if right {
+			c.Line(k.rightX(0), k.upY(0), k.rightX(0), k.upY(-0.5*padding))
+		} else {
+			c.Line(k.rightX(0), k.upY(pinR), k.rightX(0), k.upY(-0.5*padding))
+		}
 	}
 	if down {
-		c.Line(k.leftX(0), k.downY(0), k.leftX(0), k.downY(0.5*padding))
-		c.Line(k.rightX(0), k.downY(0), k.rightX(0), k.downY(0.5*padding))
+		if left {
+			c.Line(k.leftX(0), k.downY(0), k.leftX(0), k.downY(0.5*padding))
+		} else {
+			c.Line(k.leftX(0), k.downY(-pinR), k.leftX(0), k.downY(0.5*padding))
+		}
+		if right {
+			c.Line(k.rightX(0), k.downY(0), k.rightX(0), k.downY(0.5*padding))
+		} else {
+			c.Line(k.rightX(0), k.downY(-pinR), k.rightX(0), k.downY(0.5*padding))
+		}
 	}
 	if left {
-		c.Line(k.leftX(0), k.upY(0), k.leftX(-0.5*padding), k.upY(0))
-		c.Line(k.leftX(0), k.downY(0), k.leftX(-0.5*padding), k.downY(0))
+		if up {
+			c.Line(k.leftX(0), k.upY(0), k.leftX(-0.5*padding), k.upY(0))
+		} else {
+			c.Line(k.leftX(pinR), k.upY(0), k.leftX(-0.5*padding), k.upY(0))
+		}
+		if down {
+			c.Line(k.leftX(0), k.downY(0), k.leftX(-0.5*padding), k.downY(0))
+		} else {
+			c.Line(k.leftX(pinR), k.downY(0), k.leftX(-0.5*padding), k.downY(0))
+		}
 	}
 	if right {
-		c.Line(k.rightX(0), k.upY(0), k.rightX(0.5*padding), k.upY(0))
-		c.Line(k.rightX(0), k.downY(0), k.rightX(0.5*padding), k.downY(0))
+		if up {
+			c.Line(k.rightX(0), k.upY(0), k.rightX(0.5*padding), k.upY(0))
+		} else {
+			c.Line(k.rightX(-pinR), k.upY(0), k.rightX(0.5*padding), k.upY(0))
+		}
+		if down {
+			c.Line(k.rightX(0), k.downY(0), k.rightX(0.5*padding), k.downY(0))
+		} else {
+			c.Line(k.rightX(-pinR), k.downY(0), k.rightX(0.5*padding), k.downY(0))
+		}
 	}
 
 	// Now render the arcs.
@@ -84,19 +116,19 @@ func render(c *svg.SVG, k key, p panel) {
 }
 
 func (k key) leftX(dx float64) float64 {
-	return padding + dx + float64(k.x*(padding+pinR)) - float64(pinR)
+	return pinR + padding + dx + float64(k.x*(padding+2*pinR)) - pinR
 }
 
 func (k key) rightX(dx float64) float64 {
-	return padding + dx + float64(k.x*(padding+pinR)) + float64(pinR)
+	return pinR + padding + dx + float64(k.x*(padding+2*pinR)) + pinR
 }
 
 func (k key) upY(dy float64) float64 {
-	return padding + dy + float64(k.y*(padding+pinR)) - float64(pinR)
+	return pinR + padding + dy + float64(k.y*(padding+2*pinR)) - pinR
 }
 
 func (k key) downY(dy float64) float64 {
-	return padding + dy + float64(k.y*(padding+pinR)) + float64(pinR)
+	return pinR + padding + dy + float64(k.y*(padding+2*pinR)) + pinR
 }
 
 type key struct {
