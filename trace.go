@@ -63,6 +63,14 @@ func render(c *svg.SVG, k key, p panel) {
 		c.Line(k.rightX(0), k.upY(0), k.rightX(0.5*padding), k.upY(0))
 		c.Line(k.rightX(0), k.downY(0), k.rightX(0.5*padding), k.downY(0))
 	}
+
+	// Now render the arcs.
+	if !up && !left {
+		c.Arc(k.leftX(0), k.upY(pinR), pinR, pinR, pinR, false, true, k.leftX(pinR), k.upY(0))
+	}
+	if !up && !right {
+		c.Arc(k.rightX(-pinR), k.upY(0), pinR, pinR, pinR, false, true, k.rightX(0), k.upY(pinR))
+	}
 }
 
 func (k key) leftX(dx float64) float64 {
