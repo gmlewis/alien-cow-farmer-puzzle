@@ -32,16 +32,51 @@ func main() {
 	c := svg.New(os.Stdout)
 	c.Start(float64((maxx+1)*2*(pinR+padding)), float64((maxy+1)*2*(pinR+padding)))
 	c.Gstyle("fill:none;stroke:black;stroke-width:0.1")
-	for k := range p1 {
-		render(c, k, p1)
-	}
-	for k := range p2 {
-		render(c, k, p2)
-	}
+	renderPanel(c, p1)
+	renderPanel(c, p2)
 	c.Gend()
 	c.End()
 
 	log.Printf("Done.")
+}
+
+func renderPanel(c *svg.SVG, p panel) {
+	for k := range p {
+		render(c, k, p)
+	}
+
+	var initialized bool
+	var minx, miny, maxx, maxy int
+	for k := range p {
+		if !initialized {
+			minx, maxx = k.x, k.x
+			miny, maxy = k.y, k.y
+			initialized = true
+			continue
+		}
+		if k.x < minx {
+			minx = k.x
+		}
+		if k.y < miny {
+			miny = k.y
+		}
+		if k.x > maxx {
+			maxx = k.x
+		}
+		if k.y > maxy {
+			maxy = k.y
+		}
+	}
+
+	ul := key{minx, miny}
+	ur := key{maxx, miny}
+	ll := key{minx, maxy}
+	lr := key{maxx, maxy}
+
+	c.Arc(ul.leftX(-padding), ul.upY(pinR-padding), pinR, pinR, pinR, false, true, ul.leftX(pinR-padding), ul.upY(-padding))
+	c.Arc(ur.rightX(-pinR), ur.upY(0), pinR, pinR, pinR, false, true, ur.rightX(0), ur.upY(pinR))
+	c.Arc(ll.leftX(pinR), ll.downY(0), pinR, pinR, pinR, false, true, ll.leftX(0), ll.downY(-pinR))
+	c.Arc(lr.rightX(0), lr.downY(-pinR), pinR, pinR, pinR, false, true, lr.rightX(-pinR), lr.downY(0))
 }
 
 func render(c *svg.SVG, k key, p panel) {
