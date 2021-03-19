@@ -30,7 +30,9 @@ func main() {
 	}
 
 	c := svg.New(os.Stdout)
-	c.Start(float64((maxx+1)*2*(pinR+padding)), float64((maxy+1)*2*(pinR+padding)))
+	lr := key{maxx, maxy}
+	vw, vh := lr.rightX(padding), lr.downY(padding)
+	c.StartviewUnit(vw, vh, "mm", 0, 0, vw, vh)
 	c.Gstyle("fill:none;stroke:black;stroke-width:0.1")
 	renderPanel(c, p1)
 	renderPanel(c, p2)
