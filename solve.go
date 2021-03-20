@@ -14,6 +14,8 @@ const (
 	s2dx      = 8
 	solvedS1x = 5
 	solvedP2y = -3
+
+	framesPerMove = 10
 )
 
 func main() {
@@ -24,6 +26,7 @@ func main() {
 		s2x: 3,
 	}
 
+	fmt.Printf(pythonHeader, p.p1y, p.p2y, p.s1x, p.s2x)
 	fmt.Printf("# Initial position: %v\n", p)
 
 	visited := map[puzState]bool{p: true}
@@ -44,15 +47,17 @@ func main() {
 func printSolution(p puzState, solution []puzState) {
 	last := p
 	for i, pos := range solution {
+		fmt.Printf("frameNum += %v\n", framesPerMove)
+
 		switch {
 		case last.p1y != pos.p1y:
-			fmt.Printf("movep1(%v)", pos.p1y)
+			fmt.Printf("movep1y(%v, frameNum-%v, frameNum)", pos.p1y, framesPerMove)
 		case last.p2y != pos.p2y:
-			fmt.Printf("movep2(%v)", pos.p2y)
+			fmt.Printf("movep2y(%v, frameNum-%v, frameNum)", pos.p2y, framesPerMove)
 		case last.s1x != pos.s1x:
-			fmt.Printf("moves1(%v)", pos.s1x)
+			fmt.Printf("moves1x(%v, frameNum-%v, frameNum)", pos.s1x, framesPerMove)
 		case last.s2x != pos.s2x:
-			fmt.Printf("moves2(%v)", pos.s2x)
+			fmt.Printf("moves2x(%v, frameNum-%v, frameNum)", pos.s2x, framesPerMove)
 		}
 		fmt.Printf("\t # Move #%v: %v\n", i+1, pos)
 		last = pos
@@ -97,34 +102,25 @@ func optimize(p puzState, solution []puzState) []puzState {
 		switch {
 		case changed == "p1" && lastChange == "p1":
 			result[len(result)-1] = s
-			// log.Printf("i=%v: two p1's in a row, was %v, now %v", i, last, s)
 			continue
 		case changed == "p2" && lastChange == "p2":
 			result[len(result)-1] = s
-			// log.Printf("i=%v: two p2's in a row, was %v, now %v", i, last, s)
 			continue
 		case changed == "p1" && lastChange == "p2" && prevChange == "p1":
 			result[len(result)-2] = puzState{p1y: s.p1y, p2y: prev.p2y, s1x: prev.s1x, s2x: prev.s2x}
-			// log.Printf("i=%v: p1,p2,p1 in a row - overwrite prev, was %v, now %v", i, prev, result[len(result)-2])
 			continue
 		case changed == "p2" && lastChange == "p1" && prevChange == "p2":
 			result[len(result)-2] = puzState{p1y: prev.p1y, p2y: s.p2y, s1x: prev.s1x, s2x: prev.s2x}
-			// log.Printf("i=%v: p2,p1,p2 in a row - overwrite prev, was %v, now %v", i, prev, result[len(result)-2])
 			continue
 		case changed == "s1" && lastChange == "s1":
 			result[len(result)-1] = s
-			// log.Printf("i=%v: two s1's in a row, was %v, now %v", i, last, s)
 			continue
 		case changed == "s2" && lastChange == "s2":
 			result[len(result)-1] = s
-			// log.Printf("i=%v: two s2's in a row, was %v, now %v", i, last, s)
 			continue
 		}
 
-		// changes = append(changes, changed)
 		result = append(result, s)
-		// log.Printf("i=%v: no optimization: %v", i, s)
-		// log.Printf("optimize: i=%v: prev=%v, prevChange=%v, last=%v, lastChange=%v, s=%v, changed=%v", i, prev, prevChange, last, lastChange, s, changed)
 	}
 
 	var final []puzState
@@ -341,3 +337,42 @@ var p2 = panel{
 	{13, 14}: true,
 	{14, 14}: true,
 }
+
+var pythonHeader = `
+import bpy
+from easybpy import *
+
+p1 = get_object("LeftPanel")
+p1pos = p1.location
+
+p2 = get_object("RightPanel")
+p2pos = p2.location
+
+s1 = get_object("TopSlider")
+s1pos = s1.location
+
+s2 = get_object("BottomSlider")
+s2pos = s2.location
+
+def movep1y(ypos, lastFrame, frameNum):
+    p1.keyframe_insert(data_path="location", frame=lastFrame)
+    p1.location = (p1pos.x, 6*(ypos-%v), p1pos.z)
+    p1.keyframe_insert(data_path="location", frame=frameNum)
+
+def movep2y(ypos, lastFrame, frameNum):
+    p2.keyframe_insert(data_path="location", frame=lastFrame)
+    p2.location = (p2pos.x, 6*(ypos-%v), p2pos.z)
+    p2.keyframe_insert(data_path="location", frame=frameNum)
+
+def moves1x(xpos, lastFrame, frameNum):
+    s1.keyframe_insert(data_path="location", frame=lastFrame)
+    s1.location = (6*(xpos-%v), s1pos.y, s1pos.z)
+    s1.keyframe_insert(data_path="location", frame=frameNum)
+
+def moves2x(xpos, lastFrame, frameNum):
+    s2.keyframe_insert(data_path="location", frame=lastFrame)
+    s2.location = (6*(xpos-%v), s2pos.y, s2pos.z)
+    s2.keyframe_insert(data_path="location", frame=frameNum)
+    
+frameNum = 1
+`
