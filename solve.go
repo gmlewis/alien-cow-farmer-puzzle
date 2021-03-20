@@ -24,41 +24,122 @@ func main() {
 		s2x: 3,
 	}
 
-	fmt.Printf("Initial position: %v\n", p)
+	fmt.Printf("# Initial position: %v\n", p)
 
 	visited := map[puzState]bool{p: true}
 	solution := p.solve(nil, visited)
 
-	optimized := optimize(solution)
-
-	for i, pos := range optimized {
-		fmt.Printf("Move #%v: %v\n", i+1, pos)
+	for {
+		results := optimize(p, solution)
+		if len(results) == len(solution) {
+			break
+		}
+		solution = results
 	}
+	printSolution(p, solution)
 
 	log.Printf("Done.")
 }
 
-func optimize(solution []puzState) []puzState {
+func printSolution(p puzState, solution []puzState) {
+	last := p
+	for i, pos := range solution {
+		switch {
+		case last.p1y != pos.p1y:
+			fmt.Printf("movep1(%v)", pos.p1y)
+		case last.p2y != pos.p2y:
+			fmt.Printf("movep2(%v)", pos.p2y)
+		case last.s1x != pos.s1x:
+			fmt.Printf("moves1(%v)", pos.s1x)
+		case last.s2x != pos.s2x:
+			fmt.Printf("moves2(%v)", pos.s2x)
+		}
+		fmt.Printf("\t # Move #%v: %v\n", i+1, pos)
+		last = pos
+	}
+}
+
+func optimize(p puzState, solution []puzState) []puzState {
 	result := make([]puzState, 0, len(solution))
 
+	change := func(p1, p2 puzState) string {
+		switch {
+		case p1.p1y != p2.p1y:
+			return "p1"
+		case p1.p2y != p2.p2y:
+			return "p2"
+		case p1.s1x != p2.s1x:
+			return "s1"
+		case p1.s2x != p2.s2x:
+			return "s2"
+		}
+		return "none"
+	}
+
 	for i, s := range solution {
-		if i == 0 {
+		if i < 2 {
 			result = append(result, s)
 			continue
 		}
+
+		prev := result[len(result)-2]
+		var prevChange string
+		if i < 3 {
+			prevChange = change(p, prev)
+		} else {
+			prevChange = change(result[len(result)-3], prev)
+		}
 		last := result[len(result)-1]
-		if i != len(solution)-1 && s.s1x == last.s1x && s.s2x == last.s2x {
+		lastChange := change(prev, last)
+
+		changed := change(last, s)
+
+		switch {
+		case changed == "p1" && lastChange == "p1":
+			result[len(result)-1] = s
+			// log.Printf("i=%v: two p1's in a row, was %v, now %v", i, last, s)
+			continue
+		case changed == "p2" && lastChange == "p2":
+			result[len(result)-1] = s
+			// log.Printf("i=%v: two p2's in a row, was %v, now %v", i, last, s)
+			continue
+		case changed == "p1" && lastChange == "p2" && prevChange == "p1":
+			result[len(result)-2] = puzState{p1y: s.p1y, p2y: prev.p2y, s1x: prev.s1x, s2x: prev.s2x}
+			// log.Printf("i=%v: p1,p2,p1 in a row - overwrite prev, was %v, now %v", i, prev, result[len(result)-2])
+			continue
+		case changed == "p2" && lastChange == "p1" && prevChange == "p2":
+			result[len(result)-2] = puzState{p1y: prev.p1y, p2y: s.p2y, s1x: prev.s1x, s2x: prev.s2x}
+			// log.Printf("i=%v: p2,p1,p2 in a row - overwrite prev, was %v, now %v", i, prev, result[len(result)-2])
+			continue
+		case changed == "s1" && lastChange == "s1":
+			result[len(result)-1] = s
+			// log.Printf("i=%v: two s1's in a row, was %v, now %v", i, last, s)
+			continue
+		case changed == "s2" && lastChange == "s2":
+			result[len(result)-1] = s
+			// log.Printf("i=%v: two s2's in a row, was %v, now %v", i, last, s)
 			continue
 		}
-		if s.p1y != last.p1y {
-			result = append(result, puzState{p1y: s.p1y, p2y: last.p2y, s1x: s.s1x, s2x: s.s2x})
-		}
-		if s.p2y != last.p2y {
-			result = append(result, puzState{p1y: s.p1y, p2y: s.p2y, s1x: s.s1x, s2x: s.s2x})
-		}
+
+		// changes = append(changes, changed)
+		result = append(result, s)
+		// log.Printf("i=%v: no optimization: %v", i, s)
+		// log.Printf("optimize: i=%v: prev=%v, prevChange=%v, last=%v, lastChange=%v, s=%v, changed=%v", i, prev, prevChange, last, lastChange, s, changed)
 	}
 
-	return result
+	var final []puzState
+	for i, s := range result {
+		if i == 0 {
+			final = append(final, s)
+			continue
+		}
+		if change(final[len(final)-1], s) == "none" {
+			continue
+		}
+		final = append(final, s)
+	}
+
+	return final
 }
 
 func (p puzState) solve(moves []puzState, visited map[puzState]bool) []puzState {
