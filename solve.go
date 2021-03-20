@@ -9,7 +9,7 @@ import (
 
 const (
 	s1y       = 3
-	s2y       = 12
+	s2y       = 11
 	s1dx      = 8
 	s2dx      = 8
 	solvedS1x = 5
@@ -101,6 +101,9 @@ func (p puzState) slideBot(dx int) (puzState, bool) {
 func (p puzState) slideLeft(dy int) (puzState, bool) {
 	np := puzState{p1y: p.p1y + dy, p2y: p.p2y, s1x: p.s1x, s2x: p.s2x}
 	valid := p1[key{np.s1x, np.p1y + s1y}] && p1[key{np.s2x, np.p1y + s2y}]
+	// if valid {
+	// 	log.Printf("slideLeft(%v): old=%v, new=%v, valid = p1[%v] && p1[%v] = true", dy, p, np, key{np.s1x, np.p1y + s1y}, key{np.s2x, np.p1y + s2y})
+	// }
 	return np, valid
 }
 
@@ -115,7 +118,7 @@ func (p puzState) solved() bool {
 }
 
 func (p puzState) String() string {
-	return fmt.Sprintf("[%v,%v,%v,%v]", p.p1y, p.p2y, p.s1x, p.s2x)
+	return fmt.Sprintf("[p1y=%v,p2y=%v,s1x=%v,s2x=%v]", p.p1y, p.p2y, p.s1x, p.s2x)
 }
 
 type puzState struct {
