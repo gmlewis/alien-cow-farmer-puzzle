@@ -13,7 +13,7 @@ const (
 	s1dx      = 8
 	s2dx      = 8
 	solvedS1x = 5
-	solvedP1y = -3
+	solvedP2y = -3
 )
 
 func main() {
@@ -29,11 +29,36 @@ func main() {
 	visited := map[puzState]bool{p: true}
 	solution := p.solve(nil, visited)
 
-	for i, pos := range solution {
+	optimized := optimize(solution)
+
+	for i, pos := range optimized {
 		fmt.Printf("Move #%v: %v\n", i+1, pos)
 	}
 
 	log.Printf("Done.")
+}
+
+func optimize(solution []puzState) []puzState {
+	result := make([]puzState, 0, len(solution))
+
+	for i, s := range solution {
+		if i == 0 {
+			result = append(result, s)
+			continue
+		}
+		last := result[len(result)-1]
+		if i != len(solution)-1 && s.s1x == last.s1x && s.s2x == last.s2x {
+			continue
+		}
+		if s.p1y != last.p1y {
+			result = append(result, puzState{p1y: s.p1y, p2y: last.p2y, s1x: s.s1x, s2x: s.s2x})
+		}
+		if s.p2y != last.p2y {
+			result = append(result, puzState{p1y: s.p1y, p2y: s.p2y, s1x: s.s1x, s2x: s.s2x})
+		}
+	}
+
+	return result
 }
 
 func (p puzState) solve(moves []puzState, visited map[puzState]bool) []puzState {
@@ -114,7 +139,7 @@ func (p puzState) slideRight(dy int) (puzState, bool) {
 }
 
 func (p puzState) solved() bool {
-	return p.s1x == solvedS1x && p.p1y == solvedP1y
+	return p.s1x == solvedS1x && p.p2y == solvedP2y
 }
 
 func (p puzState) String() string {
