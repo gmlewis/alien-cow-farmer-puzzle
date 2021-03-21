@@ -15,7 +15,7 @@ const (
 	solvedS1x = 5
 	solvedP2y = -3
 
-	framesPerMove = 10
+	fpm = 10 // 	framesPerMove
 )
 
 func main() {
@@ -26,19 +26,19 @@ func main() {
 		s2x: 3,
 	}
 
-	fmt.Printf(pythonHeader, p.p1y, p.p2y, p.s1x, p.s2x)
+	fmt.Printf(pythonHeader, p.p1y, fpm, p.p2y, fpm, p.s1x, fpm, p.s2x, fpm)
 	fmt.Printf("# Initial position: %v\n", p)
 
 	visited := map[puzState]bool{p: true}
 	solution := p.solve(nil, visited)
 
-	for {
-		results := optimize(p, solution)
-		if len(results) == len(solution) {
-			break
-		}
-		solution = results
-	}
+	// for {
+	// 	results := optimize(p, solution)
+	// 	if len(results) == len(solution) {
+	// 		break
+	// 	}
+	// 	solution = results
+	// }
 	printSolution(p, solution)
 
 	log.Printf("Done.")
@@ -47,17 +47,15 @@ func main() {
 func printSolution(p puzState, solution []puzState) {
 	last := p
 	for i, pos := range solution {
-		fmt.Printf("frameNum += %v\n", framesPerMove)
-
 		switch {
 		case last.p1y != pos.p1y:
-			fmt.Printf("movep1y(%v, frameNum-%v, frameNum)", pos.p1y, framesPerMove)
+			fmt.Printf("movep1y(%v)", pos.p1y)
 		case last.p2y != pos.p2y:
-			fmt.Printf("movep2y(%v, frameNum-%v, frameNum)", pos.p2y, framesPerMove)
+			fmt.Printf("movep2y(%v)", pos.p2y)
 		case last.s1x != pos.s1x:
-			fmt.Printf("moves1x(%v, frameNum-%v, frameNum)", pos.s1x, framesPerMove)
+			fmt.Printf("moves1x(%v)", pos.s1x)
 		case last.s2x != pos.s2x:
-			fmt.Printf("moves2x(%v, frameNum-%v, frameNum)", pos.s2x, framesPerMove)
+			fmt.Printf("moves2x(%v)", pos.s2x)
 		}
 		fmt.Printf("\t # Move #%v: %v\n", i+1, pos)
 		last = pos
@@ -340,38 +338,50 @@ var p2 = panel{
 
 var pythonHeader = `
 import bpy
+# EasyBPY:
+#   https://github.com/curtisjamesholt/EasyBPY
+#   https://curtisholt.online/easybpy
+#   https://www.youtube.com/watch?v=ybnapDe4-Ts
 from easybpy import *
 
 p1 = get_object("LeftPanel")
 p1pos = p1.location
+p1.location = (p1pos.x, 0, p1pos.z)
 
 p2 = get_object("RightPanel")
 p2pos = p2.location
+p2.location = (p2pos.x, 0, p2pos.z)
 
 s1 = get_object("TopSlider")
 s1pos = s1.location
+s1.location = (0, s1pos.y, s1pos.z)
 
 s2 = get_object("BottomSlider")
 s2pos = s2.location
+s2.location = (0, s2pos.y, s2pos.z)
 
-def movep1y(ypos, lastFrame, frameNum):
-    p1.keyframe_insert(data_path="location", frame=lastFrame)
+def movep1y(ypos):
+    p1.keyframe_insert(data_path="location", frame=frameNum)
     p1.location = (p1pos.x, 6*(ypos-%v), p1pos.z)
+    frameNum += %v
     p1.keyframe_insert(data_path="location", frame=frameNum)
 
-def movep2y(ypos, lastFrame, frameNum):
-    p2.keyframe_insert(data_path="location", frame=lastFrame)
+def movep2y(ypos):
+    p2.keyframe_insert(data_path="location", frame=frameNum)
     p2.location = (p2pos.x, 6*(ypos-%v), p2pos.z)
+    frameNum += %v
     p2.keyframe_insert(data_path="location", frame=frameNum)
 
-def moves1x(xpos, lastFrame, frameNum):
-    s1.keyframe_insert(data_path="location", frame=lastFrame)
+def moves1x(xpos):
+    s1.keyframe_insert(data_path="location", frame=frameNum)
     s1.location = (6*(xpos-%v), s1pos.y, s1pos.z)
+    frameNum += %v
     s1.keyframe_insert(data_path="location", frame=frameNum)
 
-def moves2x(xpos, lastFrame, frameNum):
-    s2.keyframe_insert(data_path="location", frame=lastFrame)
+def moves2x(xpos):
+    s2.keyframe_insert(data_path="location", frame=frameNum)
     s2.location = (6*(xpos-%v), s2pos.y, s2pos.z)
+    frameNum += %v
     s2.keyframe_insert(data_path="location", frame=frameNum)
     
 frameNum = 1
