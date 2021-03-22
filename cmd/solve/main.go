@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 const (
@@ -32,108 +33,76 @@ func main() {
 	visited := map[puzState]bool{p: true}
 	solution := p.solve(nil, visited)
 
-	// for {
-	// 	results := optimize(p, solution)
-	// 	if len(results) == len(solution) {
-	// 		break
-	// 	}
-	// 	solution = results
-	// }
-	printSolution(p, solution)
+	commands := printSolution(p, solution)
+	commands = optimize(commands)
+
+	fmt.Println(strings.Join(commands, "\n"))
 
 	log.Printf("Done.")
 }
 
-func printSolution(p puzState, solution []puzState) {
+func printSolution(p puzState, solution []puzState) []string {
+	var lines []string
+
 	last := p
 	for i, pos := range solution {
+		var line string
 		switch {
 		case last.p1y != pos.p1y:
-			fmt.Printf("movep1y(%v)", pos.p1y)
+			line = fmt.Sprintf("movep1y(%v)", pos.p1y)
 		case last.p2y != pos.p2y:
-			fmt.Printf("movep2y(%v)", pos.p2y)
+			line = fmt.Sprintf("movep2y(%v)", pos.p2y)
 		case last.s1x != pos.s1x:
-			fmt.Printf("moves1x(%v)", pos.s1x)
+			line = fmt.Sprintf("moves1x(%v)", pos.s1x)
 		case last.s2x != pos.s2x:
-			fmt.Printf("moves2x(%v)", pos.s2x)
+			line = fmt.Sprintf("moves2x(%v)", pos.s2x)
 		}
-		fmt.Printf("\t # Move #%v: %v\n", i+1, pos)
+		line += fmt.Sprintf("\t # Move #%v: %v", i+1, pos)
 		last = pos
+
+		lines = append(lines, line)
 	}
+
+	return lines
 }
 
-func optimize(p puzState, solution []puzState) []puzState {
-	result := make([]puzState, 0, len(solution))
+func optimize(commands []string) []string {
+	lines := make([]string, 0, len(commands))
 
-	change := func(p1, p2 puzState) string {
-		switch {
-		case p1.p1y != p2.p1y:
-			return "p1"
-		case p1.p2y != p2.p2y:
-			return "p2"
-		case p1.s1x != p2.s1x:
-			return "s1"
-		case p1.s2x != p2.s2x:
-			return "s2"
-		}
-		return "none"
+	const fnNameLen = 7 // "move???"
+	const familyLen = 5 // "move?"
+
+	eq := func(s1, s2 string) bool {
+		return s1[0:fnNameLen] == s2[0:fnNameLen]
 	}
 
-	for i, s := range solution {
-		if i < 2 {
-			result = append(result, s)
-			continue
-		}
-
-		prev := result[len(result)-2]
-		var prevChange string
-		if i < 3 {
-			prevChange = change(p, prev)
-		} else {
-			prevChange = change(result[len(result)-3], prev)
-		}
-		last := result[len(result)-1]
-		lastChange := change(prev, last)
-
-		changed := change(last, s)
-
-		switch {
-		case changed == "p1" && lastChange == "p1":
-			result[len(result)-1] = s
-			continue
-		case changed == "p2" && lastChange == "p2":
-			result[len(result)-1] = s
-			continue
-		case changed == "p1" && lastChange == "p2" && prevChange == "p1":
-			result[len(result)-2] = puzState{p1y: s.p1y, p2y: prev.p2y, s1x: prev.s1x, s2x: prev.s2x}
-			continue
-		case changed == "p2" && lastChange == "p1" && prevChange == "p2":
-			result[len(result)-2] = puzState{p1y: prev.p1y, p2y: s.p2y, s1x: prev.s1x, s2x: prev.s2x}
-			continue
-		case changed == "s1" && lastChange == "s1":
-			result[len(result)-1] = s
-			continue
-		case changed == "s2" && lastChange == "s2":
-			result[len(result)-1] = s
-			continue
-		}
-
-		result = append(result, s)
+	sameFam := func(s1, s2 string) bool {
+		return s1[0:familyLen] == s2[0:familyLen]
 	}
 
-	var final []puzState
-	for i, s := range result {
+	for i, s := range commands {
 		if i == 0 {
-			final = append(final, s)
+			lines = append(lines, s)
 			continue
 		}
-		if change(final[len(final)-1], s) == "none" {
+
+		if eq(s, lines[len(lines)-1]) {
+			lines[len(lines)-1] = s
 			continue
 		}
-		final = append(final, s)
+
+		if n := len(lines); n >= 2 {
+			if sameFam(s, lines[n-1]) && sameFam(lines[n-1], lines[n-2]) {
+				lines[n-2] = lines[n-1]
+				lines[n-1] = s
+				continue
+			}
+		}
+
+		lines = append(lines, s)
 	}
 
-	return final
+	return lines
 }
 
 func (p puzState) solve(moves []puzState, visited map[puzState]bool) []puzState {
@@ -218,7 +187,7 @@ func (p puzState) solved() bool {
 }
 
 func (p puzState) String() string {
-	return fmt.Sprintf("[p1y=%v,p2y=%v,s1x=%v,s2x=%v]", p.p1y, p.p2y, p.s1x, p.s2x)
+	return fmt.Sprintf("{p1y:%v,p2y:%v,s1x:%v,s2x:%v}", p.p1y, p.p2y, p.s1x, p.s2x)
 }
 
 type puzState struct {
@@ -360,29 +329,34 @@ s2 = get_object("BottomSlider")
 s2pos = s2.location
 s2.location = (0, s2pos.y, s2pos.z)
 
+frameNum = 1
+
 def movep1y(ypos):
+    global frameNum
     p1.keyframe_insert(data_path="location", frame=frameNum)
     p1.location = (p1pos.x, 6*(ypos-%v), p1pos.z)
     frameNum += %v
     p1.keyframe_insert(data_path="location", frame=frameNum)
 
 def movep2y(ypos):
+    global frameNum
     p2.keyframe_insert(data_path="location", frame=frameNum)
     p2.location = (p2pos.x, 6*(ypos-%v), p2pos.z)
     frameNum += %v
     p2.keyframe_insert(data_path="location", frame=frameNum)
 
 def moves1x(xpos):
+    global frameNum
     s1.keyframe_insert(data_path="location", frame=frameNum)
     s1.location = (6*(xpos-%v), s1pos.y, s1pos.z)
     frameNum += %v
     s1.keyframe_insert(data_path="location", frame=frameNum)
 
 def moves2x(xpos):
+    global frameNum
     s2.keyframe_insert(data_path="location", frame=frameNum)
     s2.location = (6*(xpos-%v), s2pos.y, s2pos.z)
     frameNum += %v
     s2.keyframe_insert(data_path="location", frame=frameNum)
     
-frameNum = 1
 `
