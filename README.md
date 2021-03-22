@@ -50,6 +50,6 @@ Blender which I thought was very clever!
 I recorded the script for the video using OBS Studio (on Linux Mint
 Cinnamon 19.2), then edited it with KdenLive and posted the results to
 YouTube here:
-TBD
+https://youtu.be/13rdK3BD5A4
 
 Enjoy!
